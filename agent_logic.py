@@ -100,12 +100,15 @@ def format_duration(iso_duration: str) -> str:
     return " ".join(parts) if parts else "Unknown duration"
 
 @tool
-async def flight_search_tool(origin: str, destination: str, date: str, origin_name: str = "", destination_name: str = "") -> str:
+async def flight_search_tool(origin: str = "", destination: str = "", date: str = "", origin_name: str = "", destination_name: str = "") -> str:
     """
     Search for real-time flights. 
     - origin & destination: REQUIRES 3-letter IATA codes (e.g. BKK, LON).
     - date: YYYY-MM-DD format.
     """
+    if not origin or not destination or not date:
+        return "✨ To provide exact pricing, please specify the **Origin**, **Destination**, and **Travel Date** (e.g., 'Search flights from RGN to BKK on May 10')."
+    
     origin = origin.upper()
     destination = destination.upper()
     try:
@@ -292,7 +295,7 @@ Always use tools for live data. You are the digital face of {cfg['company']['nam
             MessagesPlaceholder(variable_name="agent_scratchpad"),
         ])
         agent = create_openai_functions_agent(self.llm, tools, prompt)
-        return AgentExecutor(agent=agent, tools=tools, verbose=True)
+        return AgentExecutor(agent=agent, tools=tools, verbose=True, handle_tool_error=True)
 
     async def analyze_input(self, text: str) -> Dict[str, str]:
         """Pre-processes input to detect language and sentiment."""
