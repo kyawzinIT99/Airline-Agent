@@ -136,5 +136,31 @@ To ensure zero-latency and high reliability, the system is deployed on **Modal C
 6. **Response Generation**: The final localized, professional response is sent back to the `/chat` endpoint.
 
 ---
+
+## 🗺️ Quick Reference: Regional Codes & Airlines
+
+To assist users and ensure high-accuracy search results, use the following 3-letter IATA city codes and airline abbreviations:
+
+### 🏙️ Major Regional Hubs (IATA)
+| City | Code | Country |
+|:---|:---:|:---|
+| **Yangon** | **RGN** | Myanmar |
+| **Mandalay** | **MDL** | Myanmar |
+| **Bangkok** | **BKK** | Thailand |
+| **Singapore** | **SIN** | Singapore |
+| **Munich** | **MUC** | Germany |
+| **Hong Kong** | **HKG** | Hong Kong |
+
+### ✈️ Key Airlines & Codes
+| Airline | IATA | Origin / Focus |
+|:---|:---:|:---|
+| **Myanmar Airways Intl (MAI)** | **8M** | Myanmar |
+| **Thai Airways** | **TG** | Thailand |
+| **Singapore Airlines** | **SQ** | Singapore |
+| **Bangkok Airways** | **PG** | Regional |
+| **AirAsia** | **AK** | Regional |
+
+---
+
 **Technical Lead**: MR. KYAW ZIN TUN  
 **Powered by**: itsolutions.mm
