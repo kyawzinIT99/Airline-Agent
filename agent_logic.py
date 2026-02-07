@@ -106,11 +106,14 @@ async def flight_search_tool(origin: str = "", destination: str = "", date: str 
     - origin & destination: REQUIRES 3-letter IATA codes (e.g. BKK, LON).
     - date: YYYY-MM-DD format.
     """
+    print(f"🔍 TOOL: flight_search_tool called with: origin={origin}, dest={destination}, date={date}")
     if not origin or not destination or not date:
+        print("   ⚠️ Tool missing required parameters.")
         return "✨ To provide exact pricing, please specify the **Origin**, **Destination**, and **Travel Date** (e.g., 'Search flights from RGN to BKK on May 10')."
     
     origin = origin.upper()
     destination = destination.upper()
+    print(f"   Normalized: {origin} -> {destination}")
     try:
         # Load config for branding
         cfg_path = os.path.join(os.path.dirname(__file__), "config.json")

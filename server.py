@@ -97,11 +97,14 @@ async def upload_endpoint(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/chat")
-async def chat_endpoint(request: ChatRequest):
-    print(f"📥 New message from user: {request.message[:50]}...")
+async def chat_endpoint(request: ChatRequest, fast_req: Request):
+    user_agent = fast_req.headers.get("user-agent", "Unknown")
+    print(f"📥 REQUEST FROM: {user_agent[:50]}")
+    print(f"   MESSAGE: {request.message}")
     try:
         # Simple history formatting for the agent
         history_list = [{"role": msg.role, "content": msg.content} for msg in request.history] if request.history else []
+        print(f"   HISTORY DEPTH: {len(history_list)}")
         
         # Add a timeout to the entire agent processing to prevent hung requests
         response_text = await asyncio.wait_for(agent.get_response(request.message, history_list), timeout=60.0)
