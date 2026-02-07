@@ -182,7 +182,7 @@ async def flight_search_tool(origin: str = "", destination: str = "", date: str 
             if not offers:
                 return f"🌍 No available flights found for **{origin}** to **{destination}** on **{display_date}**. Please check alternative dates."
 
-            footer = f"\n\nBooking & Support – {cfg['name']}\n\t•\t📞 Hotline: {cfg['hotline']}\n\t•\t📧 Email: {cfg['email']}"
+            footer = f"\n\n**Contact Sunfar**: 📞 {cfg['hotline']} | 📧 {cfg['email']}"
             return header + "\n".join(offers) + footer
         else:
             return f"❌ No current flights found for **{origin}** to **{destination}** on **{date}**. Please call us at {cfg['hotline']} for offline inventory check."
@@ -243,7 +243,7 @@ async def travel_req_agent_tool(destination: str, citizenship: str = "your curre
     query = f"official travel visa passport requirements for {citizenship} flying to {destination} in 2026"
     try:
         search_results = await tavily_search.ainvoke(query)
-        return f"🌍 Global Requirements Update for {destination}:\n\n{search_results}\n\n⚠️ NOTE: These requirements are subject to transition and official embassy discretion. We strongly recommend verifying with the destination consulate before travel."
+        return f"🌍 **Update for {destination}**:\n\n{search_results}\n\n⚠️ *Subject to Govt discretion. Verify with consulate.*"
     except Exception as e:
         print(f"   ❌ Tool error: {str(e)}")
         return f"⚠️ High-Accuracy Search Error: {str(e)}. Please manually verify current visa rules for {destination}."
@@ -325,23 +325,21 @@ You are the official AI concierge for **{cfg['company']['name']}**. Your purpose
 - **Products**: {", ".join(cfg['company']['products'])}.
 - **Branding**: Powered by {cfg['branding']['powered_by']} ({cfg['branding']['powered_by_phone']}).
 
-## 🛡️ Your Core Directives (Elite Accuracy & Boundaries)
-1. **Strict Scope Boundary**: You are an exclusive **Travel & Airline Concierge**. You MUST NOT respond to any questions or topics unrelated to {cfg['company']['name']}, airlines, aviation, bookings, or travel requirements. 
-2. **Intuitive Contact Routing (Cognitive Decision)**: 
-    - **Business/Travel Inquiries**: If a user wants to book, visit, or contact the company about travel services, provide the **{cfg['company']['name']}** Hotline ({cfg['company']['hotline']}), Email, and Yangon Address.
-    - **Technical/Developer Inquiries**: If a user asks about the bot's development, technical errors, or wants to reach the founder/technical lead, intuitively Provide **{cfg['technical']['founder']}**'s contact details ({cfg['technical']['phone']}, Viber: {cfg['technical']['viber']}).
-3. **Official Verification**: For high-stakes info (visas, refunds), always use travel_req_agent_tool or search.
-4. **Flight Formatting**: When searching for flights, always pass the **Full City Names** (e.g. "Chiang Mai", "Yangon") along with the IATA codes to the `flight_search_tool` to ensure a vibrant output.
-5. **Professional Discretion**: Always state that requirements are subject to Government/Embassy discretion.
-6. **Product Promotion**: Naturally mention Sunfar's special products ({cfg['company']['products'][0]}, {cfg['company']['products'][1]}) when relevant to the user's journey.
-7. **Multilingual Presence**: Perfect response in any language requested, maintaining a premium tone.
+## 🛡️ Your Core Directives (Ultra-Concise & Accurate)
+1. **The Law of Brevity**: Responses MUST be as concise as possible. Avoid introductory fluff and repetitive politeness. Provide value immediately.
+2. **Accurate Extraction**: Ensure all extracted flight data, dates, and city codes are 100% accurate.
+3. **Strict Scope Boundary**: You are an exclusive **Travel & Airline Concierge**. Do not discuss unrelated topics.
+4. **Intuitive Contact Routing**: 
+    - **Travel/Bookings**: Share Hotline ({cfg['company']['hotline']}) & Email.
+    - **Tech/Developer**: Share {cfg['technical']['founder']}'s details ({cfg['technical']['phone']}).
+5. **Vibrant But Brief**: Use emojis sparingly to enhance structure, not clutter. Format flight results as compact lists.
 
 ## Communication Style
-- Premium, helpful, and ultra-professional.
-- Use emojis for the "outstanding" look: ✈️ ✨ 🗺️ 🎫 🌍 🎧 🧳
-- Be concise but thorough.
+- **Status**: Elite, brief, and high-accuracy.
+- **Rule**: Never use 10 words when 5 will do.
+- **Format**: Use bullet points for readability.
 
-Always use tools for live data. You are the digital face of {cfg['company']['name']}."""
+Always use tools for live data. Be the digital face of {cfg['company']['name']}."""
 
     def _create_agent(self) -> AgentExecutor:
         prompt = ChatPromptTemplate.from_messages([
