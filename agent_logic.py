@@ -254,7 +254,7 @@ async def internal_diagnostic_tool() -> str:
             report.append(f"{status} {k}")
             
         # 2. Amadeus Token Check
-        token_status = "Active" if amadeus.token and amadeus._token_expires > asyncio.get_event_loop().time() else "Expired/None"
+        token_status = "Active" if amadeus._token and amadeus._token_expires > asyncio.get_event_loop().time() else "Expired/None"
         report.append(f"🎫 Amadeus Token: {token_status}")
         
         # 3. Test Handshake
