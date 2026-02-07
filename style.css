@@ -151,13 +151,17 @@ body {
 }
 
 .status-badge {
-    background: #e5e7eb;
-    padding: 8px;
-    border-radius: 8px;
-    font-size: 0.75rem;
-    text-align: center;
-    color: var(--accent);
-    font-weight: 600;
+    background: var(--glass-bg) !important;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 24px;
+    border: 1px solid var(--glass-border);
 }
 
 .powered-by {
