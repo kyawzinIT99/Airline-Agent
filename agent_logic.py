@@ -72,6 +72,8 @@ class AmadeusClient:
             else:
                 body = response.text or "No body returned"
                 return {"error": f"Amadeus API HTTP {response.status_code}: {body}"}
+        except Exception as e:
+            return {"error": f"Connection Error: {str(e)}"}
 
 amadeus = AmadeusClient()
 
@@ -127,6 +129,10 @@ async def flight_search_tool(origin: str = "", destination: str = "", date: str 
         async with amadeus_semaphore:
             results = await asyncio.wait_for(amadeus.search_flights(origin, destination, date), timeout=20.0)
         
+        if "error" in results:
+            print(f"   ❌ Tool results error: {results['error']}")
+            return f"⚠️ I encountered a temporary technical issue: {results['error']}."
+
         if "data" in results and results["data"]:
             # Format Date for Display
             try:
@@ -234,8 +240,20 @@ async def travel_req_agent_tool(destination: str, citizenship: str = "your curre
     try:
         search_results = await tavily_search.ainvoke(query)
         return f"🌍 Global Requirements Update for {destination}:\n\n{search_results}\n\n⚠️ NOTE: These requirements are subject to transition and official embassy discretion. We strongly recommend verifying with the destination consulate before travel."
+            # Fallback if no flights found but successful call
+            if not offers:
+                return f"🌍 No direct flights found for **{origin}** to **{destination}** on **{display_date}**. We recommend checking alternative dates or contacting our hotline (01-8243993) for offline booking options."
+            
+            return header + "\n".join(offers) + f"\n\nBooking & Support – {cfg['name']}\n\t•\t📞 Hotline: {cfg['hotline']}\n\t•\t📧 Email: {cfg['email']}\n\n✨ Let us know if you need help with booking or travel planning!"
+
+        else:
+            print(f"   ℹ️ No data in results for {origin}->{destination}")
+            return f"🌍 I couldn't find any available flights for **{origin}** to **{destination}** on **{date}**. This could be due to limited data in our system or the route being unavailable on this specific date."
+
     except Exception as e:
         print(f"   ❌ Tool error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return f"⚠️ I encountered a technical hiccup searching for flights. [Internal Error: {str(e)[:50]}]"
 
 @tool
