@@ -9,6 +9,7 @@ from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langchain.tools import tool
 from langchain_community.tools.tavily_search import TavilySearchResults
 import asyncio
+from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -98,8 +99,13 @@ def format_duration(iso_duration: str) -> str:
     return " ".join(parts) if parts else "Unknown duration"
 
 @tool
-async def flight_search_tool(origin: str, destination: str, date: str) -> str:
-    """Search for real-time flights. REQUIRES 3-letter IATA codes (e.g. BKK, LON) and date in YYYY-MM-DD format."""
+async def flight_search_tool(origin: str, destination: str, date: str, origin_name: str = "", destination_name: str = "") -> str:
+    """
+    Search for real-time flights. 
+    - origin & destination: REQUIRES 3-letter IATA codes (e.g. BKK, LON).
+    - date: YYYY-MM-DD format.
+    - origin_name & destination_name: The full city names (e.g. Bangkok, Singapore).
+    """
     try:
         # Load config for branding
         cfg_path = os.path.join(os.path.dirname(__file__), "config.json")
@@ -114,20 +120,30 @@ async def flight_search_tool(origin: str, destination: str, date: str) -> str:
             results = await asyncio.wait_for(amadeus.search_flights(origin, destination, date), timeout=10.0)
         
         if "data" in results and results["data"]:
-            header = f"✈️ Flights: {origin} → {destination}\n📅 Date: {date}\n\nAvailable options:\n"
+            # Format Date for Display
+            try:
+                dt = datetime.strptime(date, "%Y-%m-%d")
+                display_date = dt.strftime("%d %B %Y")
+            except:
+                display_date = date
+
+            # Header with City Names
+            header_origin = f"{origin_name} ({origin})" if origin_name else origin
+            header_dest = f"{destination_name} ({destination})" if destination_name else destination
+            
+            header = f"✈️ {header_origin} → {header_dest}\n📅 {display_date}\n\nAvailable Flights:\n"
             offers = []
-            emojis = ["1️⃣", "2️⃣", "3️⃣"]
             currency_map = {"EUR": "€", "USD": "$", "THB": "฿"}
 
-            for i, offer in enumerate(results["data"][:3]):
+            for offer in results["data"][:5]: # Take top 5
                 price = offer["price"]["total"]
                 currency_code = offer["price"]["currency"]
                 currency_symbol = currency_map.get(currency_code, currency_code)
                 itinerary = offer["itineraries"][0]
                 readable_duration = format_duration(itinerary["duration"])
-                offers.append(f"{emojis[i]} {currency_symbol}{price} — {readable_duration}")
+                offers.append(f"\t•\t{currency_symbol}{price} — ⏱️ {readable_duration}")
             
-            footer = f"\n\n📞 Booking & Support:\n{cfg['name']}\nPhone: {cfg['hotline']}\nEmail: {cfg['email']}\n\nLet me know if you’d like help with booking or comparing flights 😊"
+            footer = f"\n\nBooking & Support – {cfg['name']}\n\t•\t📞 Hotline: {cfg['hotline']}\n\t•\t📧 Email: {cfg['email']}\n\n✨ Let us know if you need help with booking or travel planning!"
             return header + "\n".join(offers) + footer
         elif "error" in results:
             err = results["error"]
@@ -242,9 +258,10 @@ You are the official AI concierge for **{cfg['company']['name']}**. Your purpose
     - **Business/Travel Inquiries**: If a user wants to book, visit, or contact the company about travel services, provide the **{cfg['company']['name']}** Hotline ({cfg['company']['hotline']}), Email, and Yangon Address.
     - **Technical/Developer Inquiries**: If a user asks about the bot's development, technical errors, or wants to reach the founder/technical lead, intuitively Provide **{cfg['technical']['founder']}**'s contact details ({cfg['technical']['phone']}, Viber: {cfg['technical']['viber']}).
 3. **Official Verification**: For high-stakes info (visas, refunds), always use travel_req_agent_tool or search.
-4. **Professional Discretion**: Always state that requirements are subject to Government/Embassy discretion.
-5. **Product Promotion**: Naturally mention Sunfar's special products ({cfg['company']['products'][0]}, {cfg['company']['products'][1]}) when relevant to the user's journey.
-6. **Multilingual Presence**: Perfect response in any language requested, maintaining a premium tone.
+4. **Flight Formatting**: When searching for flights, always pass the **Full City Names** (e.g. "Chiang Mai", "Yangon") along with the IATA codes to the `flight_search_tool` to ensure a vibrant output.
+5. **Professional Discretion**: Always state that requirements are subject to Government/Embassy discretion.
+6. **Product Promotion**: Naturally mention Sunfar's special products ({cfg['company']['products'][0]}, {cfg['company']['products'][1]}) when relevant to the user's journey.
+7. **Multilingual Presence**: Perfect response in any language requested, maintaining a premium tone.
 
 ## Communication Style
 - Premium, helpful, and ultra-professional.

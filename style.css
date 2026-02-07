@@ -228,6 +228,21 @@ body {
     background: #f7f7f8;
 }
 
+.message.typing .bubble::after {
+    content: "▋";
+    display: inline-block;
+    vertical-align: middle;
+    animation: cursorBlink 0.8s infinite;
+    color: var(--accent);
+    margin-left: 2px;
+}
+
+@keyframes cursorBlink {
+    50% {
+        opacity: 0;
+    }
+}
+
 .avatar {
     width: 30px;
     height: 30px;
@@ -244,6 +259,7 @@ body {
     font-size: 1rem;
     line-height: 1.6;
     word-wrap: break-word;
+    white-space: pre-wrap;
 }
 
 /* Input Section */
@@ -332,6 +348,26 @@ input {
 }
 
 /* Animations and polish */
+@keyframes messageFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message {
+    width: 100%;
+    display: flex;
+    gap: 20px;
+    padding: 24px 0;
+    animation: messageFadeIn 0.4s ease forwards;
+}
+
 .chat-container::-webkit-scrollbar {
     width: 8px;
 }

@@ -26,31 +26,61 @@ async function sendMessage() {
         removeTyping(typingId);
 
         if (data.status === 'success') {
-            appendMessage('system', data.response);
+            await appendMessage('system', data.response);
             chatHistory.push({ role: 'user', content: text });
             chatHistory.push({ role: 'assistant', content: data.response });
             updateInsights(data.response);
         } else {
-            appendMessage('system', '⚠️ Pardon me, I encountered a technical difficulty.');
+            await appendMessage('system', '⚠️ Pardon me, I encountered a technical difficulty.');
         }
     } catch (error) {
         removeTyping(typingId);
-        appendMessage('system', '⚠️ Connection lost. Ensure the backend is running.');
+        await appendMessage('system', '⚠️ Connection lost. Ensure the backend is running.');
     }
 }
 
-function appendMessage(role, content) {
+async function appendMessage(role, content) {
     const msgDiv = document.createElement('div');
     msgDiv.className = `message ${role}`;
+    if (role === 'system') msgDiv.classList.add('typing');
+
     const avatar = role === 'user' ? '👤' : '✨';
     msgDiv.innerHTML = `
         <div class="message-wrapper">
             <div class="avatar">${avatar}</div>
-            <div class="bubble">${content}</div>
+            <div class="bubble"></div>
         </div>
     `;
+
+    const bubble = msgDiv.querySelector('.bubble');
     chatContainer.appendChild(msgDiv);
     chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    if (role === 'system') {
+        await typeWriter(bubble, content);
+        msgDiv.classList.remove('typing');
+    } else {
+        bubble.textContent = content;
+    }
+}
+
+async function typeWriter(element, text) {
+    const speed = 15; // ms per character
+    let i = 0;
+
+    // We iterate through the string, but handle emojis correctly (which can be surrogate pairs)
+    const chars = Array.from(text);
+
+    for (const char of chars) {
+        element.textContent += char;
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+
+        // Dynamic speed: slower for punctuation
+        let currentSpeed = speed;
+        if (['.', '!', '?', '\n'].includes(char)) currentSpeed = speed * 4;
+
+        await new Promise(r => setTimeout(r, currentSpeed));
+    }
 }
 
 function showTyping() {
@@ -159,11 +189,11 @@ fileInput.addEventListener('change', async () => {
         removeTyping(typingId);
 
         if (data.status === 'success') {
-            appendMessage('system', `✨ **${data.message}**\n\n- Name: ${data.extracted_data.name}\n- Passport: ${data.extracted_data.passport_number}`);
+            await appendMessage('system', `✨ **${data.message}**\n\n- Name: ${data.extracted_data.name}\n- Passport: ${data.extracted_data.passport_number}`);
         }
     } catch (error) {
         removeTyping(typingId);
-        appendMessage('system', '⚠️ Failed to process document.');
+        await appendMessage('system', '⚠️ Failed to process document.');
     }
 });
 
