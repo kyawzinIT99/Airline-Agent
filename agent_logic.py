@@ -47,8 +47,8 @@ class AmadeusClient:
         
         url = f"{self.base_url}/v2/shopping/flight-offers"
         params = {
-            "originLocationCode": origin,
-            "destinationLocationCode": destination,
+            "originLocationCode": origin.upper(),
+            "destinationLocationCode": destination.upper(),
             "departureDate": date,
             "adults": 1,
             "currencyCode": "USD",
@@ -105,8 +105,9 @@ async def flight_search_tool(origin: str, destination: str, date: str, origin_na
     Search for real-time flights. 
     - origin & destination: REQUIRES 3-letter IATA codes (e.g. BKK, LON).
     - date: YYYY-MM-DD format.
-    - origin_name & destination_name: The full city names (e.g. Bangkok, Singapore).
     """
+    origin = origin.upper()
+    destination = destination.upper()
     try:
         # Load config for branding
         cfg_path = os.path.join(os.path.dirname(__file__), "config.json")
