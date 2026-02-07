@@ -235,7 +235,42 @@ async def travel_req_agent_tool(destination: str, citizenship: str = "your curre
         search_results = await tavily_search.ainvoke(query)
         return f"🌍 Global Requirements Update for {destination}:\n\n{search_results}\n\n⚠️ NOTE: These requirements are subject to transition and official embassy discretion. We strongly recommend verifying with the destination consulate before travel."
     except Exception as e:
-        return f"⚠️ High-Accuracy Search Error: {e}. Please manually verify current visa rules for {destination}."
+        print(f"   ❌ Tool error: {str(e)}")
+        return f"⚠️ I encountered a technical hiccup searching for flights. [Internal Error: {str(e)[:50]}]"
+
+@tool
+async def internal_diagnostic_tool() -> str:
+    """
+    Check the internal health and connectivity of the Airline Assistant.
+    Use this if a search fails or if device discrepancies are reported.
+    """
+    try:
+        report = ["🔍 --- INTERNAL SYSTEM DIAGNOSTIC ---"]
+        
+        # 1. Environment Check
+        keys = ["OPENAI_API_KEY", "AMADEUS_CLIENT_ID", "AMADEUS_CLIENT_SECRET", "TAVILY_API_KEY"]
+        for k in keys:
+            status = "✅" if os.environ.get(k) else "❌"
+            report.append(f"{status} {k}")
+            
+        # 2. Amadeus Token Check
+        token_status = "Active" if amadeus.token and amadeus._token_expires > asyncio.get_event_loop().time() else "Expired/None"
+        report.append(f"🎫 Amadeus Token: {token_status}")
+        
+        # 3. Test Handshake
+        try:
+            test = await amadeus.search_flights("RGN", "BKK", "2026-03-10")
+            if "data" in test:
+                report.append(f"✈️ Amadeus Handshake: SUCCESS (Found {len(test['data'])} flights)")
+            else:
+                report.append("⚠️ Amadeus Handshake: NO DATA RETURNED (API might be in sandbox mode with restricted data)")
+        except Exception as e:
+            report.append(f"❌ Amadeus Handshake: FAILED ({str(e)[:50]})")
+            
+        report.append("🏁 --- DIAGNOSTIC COMPLETE ---")
+        return "\n".join(report)
+    except Exception as e:
+        return f"❌ Diagnostic failed: {str(e)}"
 
 @tool
 def customer_service_agent_tool(issue: str) -> str:
