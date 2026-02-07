@@ -25,7 +25,8 @@ class AmadeusClient:
         self.client_id = os.getenv("AMADEUS_CLIENT_ID")
         self.client_secret = os.getenv("AMADEUS_CLIENT_SECRET")
         self.base_url = "https://test.api.amadeus.com"
-        self.token = None
+        self._token = None
+        self._token_expires = 0
 
     async def _get_token(self):
         url = f"{self.base_url}/v1/security/oauth2/token"
@@ -37,43 +38,49 @@ class AmadeusClient:
         async with httpx.AsyncClient() as client:
             response = await client.post(url, data=data)
             if response.status_code == 200:
-                self.token = response.json()["access_token"]
+                self._token = response.json()["access_token"]
+                self._token_expires = asyncio.get_event_loop().time() + response.json()["expires_in"] - 10
             else:
                 raise Exception(f"Failed to get Amadeus token: {response.text}")
 
-    async def search_flights(self, origin: str, destination: str, date: str):
-        if not self.token:
-            await self._get_token()
-        
-        url = f"{self.base_url}/v2/shopping/flight-offers"
-        params = {
-            "originLocationCode": origin.upper(),
-            "destinationLocationCode": destination.upper(),
-            "departureDate": date,
-            "adults": 1,
-            "currencyCode": "USD",
-            "max": 5
-        }
-        headers = {"Authorization": f"Bearer {self.token}"}
-        
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url, params=params, headers=headers)
-            if response.status_code == 200:
-                return response.json()
-            elif response.status_code == 401: # Token expired
-                await self._get_token()
-                headers["Authorization"] = f"Bearer {self.token}"
-                response = await client.get(url, params=params, headers=headers)
-                return response.json()
-            elif response.status_code == 429:
-                return {"error": "Too many requests. Please wait a moment or use our Hotline (01-8243993) for immediate help."}
-            elif response.status_code >= 500:
-                return {"error": "Aviation data system is temporarily slow. Please retry in 30 seconds."}
-            else:
-                body = response.text or "No body returned"
-                return {"error": f"Amadeus API HTTP {response.status_code}: {body}"}
-        except Exception as e:
-            return {"error": f"Connection Error: {str(e)}"}
+    async def search_flights(self, origin: str, destination: str, date: str, retries: int = 2):
+        for attempt in range(retries + 1):
+            try:
+                if not self._token or asyncio.get_event_loop().time() > self._token_expires:
+                    await self._get_token()
+                
+                url = f"{self.base_url}/v2/shopping/flight-offers"
+                params = {
+                    "originLocationCode": origin.upper(),
+                    "destinationLocationCode": destination.upper(),
+                    "departureDate": date,
+                    "adults": 1,
+                    "currencyCode": "USD",
+                    "max": 5
+                }
+                headers = {"Authorization": f"Bearer {self._token}"}
+                
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(url, params=params, headers=headers)
+                    if response.status_code == 200:
+                        return response.json()
+                    elif response.status_code == 401: # Token expired
+                        self._token = None
+                        continue
+                    elif response.status_code == 429:
+                        if attempt < retries:
+                            wait_time = 2 ** attempt
+                            print(f"   ⚠️ Rate limited (429). Retrying in {wait_time}s...")
+                            await asyncio.sleep(wait_time)
+                            continue
+                        return {"error": "Rate limit reached. Please retry in a moment."}
+                    else:
+                        return {"error": f"Amadeus API HTTP {response.status_code}: {response.text[:100]}"}
+            except Exception as e:
+                if attempt < retries:
+                    continue
+                return {"error": f"Connection Error: {str(e)}"}
+        return {"error": "Maximum retries exceeded."}
 
 amadeus = AmadeusClient()
 
@@ -127,7 +134,7 @@ async def flight_search_tool(origin: str = "", destination: str = "", date: str 
 
         # Use semaphore to handle simultaneous users gracefully
         async with amadeus_semaphore:
-            results = await asyncio.wait_for(amadeus.search_flights(origin, destination, date), timeout=20.0)
+            results = await asyncio.wait_for(amadeus.search_flights(origin, destination, date), timeout=25.0)
         
         if "error" in results:
             print(f"   ❌ Tool results error: {results['error']}")
@@ -147,10 +154,7 @@ async def flight_search_tool(origin: str = "", destination: str = "", date: str 
             
             header = f"✈️ {header_origin} → {header_dest}\n📅 {display_date}\n\nAvailable Flights:\n"
             offers = []
-            # Currency mapping with USD as the primary focus
             currency_map = {"USD": "$", "EUR": "€", "THB": "฿"}
-
-            # Carry dictionaries for carrier names
             carriers_map = results.get("dictionaries", {}).get("carriers", {})
 
             for offer in results["data"][:5]: # Take top 5
@@ -161,12 +165,10 @@ async def flight_search_tool(origin: str = "", destination: str = "", date: str 
                     
                     itineraries = offer.get("itineraries", [])
                     if not itineraries: continue
-                    
                     itinerary = itineraries[0]
                     duration = itinerary.get("duration", "PT0H0M")
                     readable_duration = format_duration(duration)
                     
-                    # Extract Carrier Code (Try multiple sources)
                     carrier_code = offer.get("validatingCarrierCodes", [None])[0]
                     if not carrier_code and itinerary.get("segments"):
                         carrier_code = itinerary["segments"][0].get("carrierCode")
@@ -177,19 +179,21 @@ async def flight_search_tool(origin: str = "", destination: str = "", date: str 
                     print(f"⚠️ Error parsing flight offer: {loop_e}")
                     continue
             
-            footer = f"\n\nBooking & Support – {cfg['name']}\n\t•\t📞 Hotline: {cfg['hotline']}\n\t•\t📧 Email: {cfg['email']}\n\n✨ Let us know if you need help with booking or travel planning!"
+            if not offers:
+                return f"🌍 No available flights found for **{origin}** to **{destination}** on **{display_date}**. Please check alternative dates."
+
+            footer = f"\n\nBooking & Support – {cfg['name']}\n\t•\t📞 Hotline: {cfg['hotline']}\n\t•\t📧 Email: {cfg['email']}"
             return header + "\n".join(offers) + footer
-        elif "error" in results:
-            err = results["error"]
-            if "Consumer over quota" in err:
-                return f"🎫 NOTE: High-demand search limit reached for today. Please contact our 24/7 Hotline ({cfg['hotline']}) for immediate flight pricing and booking."
-            return f"⚠️ Service Update: {err}"
         else:
-            return f"❌ No direct flights found for this specific date. Please try an alternative date or call {cfg['name']} at {cfg['hotline']}."
+            return f"❌ No current flights found for **{origin}** to **{destination}** on **{date}**. Please call us at {cfg['hotline']} for offline inventory check."
+
     except asyncio.TimeoutError:
-        return "⏳ Connection is taking a bit longer than usual due to high traffic. To save time, please call our direct hotline at 01-8243993 for an instant quote!"
+        return "⏳ Search is taking a bit longer than expected. Please retry in a few seconds or call our 24/7 hotline."
     except Exception as e:
-        return f"⚠️ System Error during search: {str(e)}"
+        print(f"   ❌ Tool error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return f"⚠️ I encountered a technical difficulty. [Error Code: {str(e)[:40]}]"
 
 @tool
 def booking_agent_tool(details: str) -> str:
@@ -240,21 +244,9 @@ async def travel_req_agent_tool(destination: str, citizenship: str = "your curre
     try:
         search_results = await tavily_search.ainvoke(query)
         return f"🌍 Global Requirements Update for {destination}:\n\n{search_results}\n\n⚠️ NOTE: These requirements are subject to transition and official embassy discretion. We strongly recommend verifying with the destination consulate before travel."
-            # Fallback if no flights found but successful call
-            if not offers:
-                return f"🌍 No direct flights found for **{origin}** to **{destination}** on **{display_date}**. We recommend checking alternative dates or contacting our hotline (01-8243993) for offline booking options."
-            
-            return header + "\n".join(offers) + f"\n\nBooking & Support – {cfg['name']}\n\t•\t📞 Hotline: {cfg['hotline']}\n\t•\t📧 Email: {cfg['email']}\n\n✨ Let us know if you need help with booking or travel planning!"
-
-        else:
-            print(f"   ℹ️ No data in results for {origin}->{destination}")
-            return f"🌍 I couldn't find any available flights for **{origin}** to **{destination}** on **{date}**. This could be due to limited data in our system or the route being unavailable on this specific date."
-
     except Exception as e:
         print(f"   ❌ Tool error: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return f"⚠️ I encountered a technical hiccup searching for flights. [Internal Error: {str(e)[:50]}]"
+        return f"⚠️ High-Accuracy Search Error: {str(e)}. Please manually verify current visa rules for {destination}."
 
 @tool
 async def internal_diagnostic_tool() -> str:
@@ -277,11 +269,11 @@ async def internal_diagnostic_tool() -> str:
         
         # 3. Test Handshake
         try:
-            test = await amadeus.search_flights("RGN", "BKK", "2026-03-10")
+            test = await amadeus.search_flights("RGN", "BKK", "2026-03-10", retries=0)
             if "data" in test:
                 report.append(f"✈️ Amadeus Handshake: SUCCESS (Found {len(test['data'])} flights)")
             else:
-                report.append("⚠️ Amadeus Handshake: NO DATA RETURNED (API might be in sandbox mode with restricted data)")
+                report.append(f"⚠️ Amadeus Handshake: NO DATA / ERROR ({test.get('error', 'Unknown')})")
         except Exception as e:
             report.append(f"❌ Amadeus Handshake: FAILED ({str(e)[:50]})")
             
@@ -299,7 +291,7 @@ tools = [
     flight_search_tool, booking_agent_tool, baggage_agent_tool, 
     checkin_agent_tool, status_agent_tool, change_cancel_agent_tool, 
     travel_req_agent_tool, loyalty_agent_tool, payment_agent_tool, 
-    customer_service_agent_tool
+    customer_service_agent_tool, internal_diagnostic_tool
 ]
 
 # --- Core Agent Class ---
