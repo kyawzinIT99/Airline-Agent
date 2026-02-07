@@ -153,31 +153,75 @@ async def flight_search_tool(origin: str = "", destination: str = "", date: str 
             header_dest = f"{destination_name} ({destination})" if destination_name else destination
             
             header = f"✈️ {header_origin} → {header_dest}\n📅 {display_date}\n\nAvailable Flights:\n"
-            offers = []
-            currency_map = {"USD": "$", "EUR": "€", "THB": "฿"}
+            # Group flights by Carrier for a cleaner "Transit Route" view
+            carrier_groups = {}
+            currency_map = {"USD": "$", "EUR": "€", "THB": "฿", "AUD": "A$"}
             carriers_map = results.get("dictionaries", {}).get("carriers", {})
-
-            for offer in results["data"][:5]: # Take top 5
+            for offer in results["data"][:6]: # Analyze top 6
                 try:
-                    price = offer.get("price", {}).get("total", "N/A")
                     currency_code = offer.get("price", {}).get("currency", "USD")
                     currency_symbol = currency_map.get(currency_code, currency_code)
+                    price = f"{currency_symbol}{offer.get('price', {}).get('total', 'N/A')}"
                     
                     itineraries = offer.get("itineraries", [])
                     if not itineraries: continue
                     itinerary = itineraries[0]
-                    duration = itinerary.get("duration", "PT0H0M")
-                    readable_duration = format_duration(duration)
+                    duration = itinerary.get("duration", "PT0H0M").replace("PT", "").lower()
+                    
+                    # Extract Transits
+                    segments = itinerary.get("segments", [])
+                    transits = []
+                    if len(segments) > 1:
+                        # The transit point is the arrival of the segment before the last one
+                        for i in range(len(segments) - 1):
+                            transit_iata = segments[i].get("arrival", {}).get("iataCode")
+                            if transit_iata:
+                                transits.append(transit_iata)
                     
                     carrier_code = offer.get("validatingCarrierCodes", [None])[0]
-                    if not carrier_code and itinerary.get("segments"):
-                        carrier_code = itinerary["segments"][0].get("carrierCode")
+                    if not carrier_code and segments:
+                        carrier_code = segments[0].get("carrierCode")
                     
                     carrier_name = carriers_map.get(carrier_code, carrier_code) or "Airline"
-                    offers.append(f"\t•\t{carrier_name} — {currency_symbol}{price} — ⏱️ {readable_duration}")
+                    
+                    if carrier_name not in carrier_groups:
+                        carrier_groups[carrier_name] = []
+                    
+                    carrier_groups[carrier_name].append({
+                        "price": price,
+                        "duration": duration,
+                        "transits": transits
+                    })
                 except Exception as loop_e:
                     print(f"⚠️ Error parsing flight offer: {loop_e}")
                     continue
+
+            # Final Building of the Output
+            offers = []
+            for carrier_name, flights in carrier_groups.items():
+                # For each carrier, we might have multiple flight options (different transits/durations)
+                carrier_block = [f"**{carrier_name}**"]
+                
+                # Prices and Durations (concise grouping)
+                prices = list(set([f["price"] for f in flights]))
+                durations = " or ".join(list(set([f["duration"] for f in flights]))[:2])
+                
+                carrier_block.append(f"\t•\t💰 {', '.join(prices)}")
+                carrier_block.append(f"\t•\t⏱️ {durations}")
+                
+                # Transits
+                all_transits = []
+                for f in flights:
+                    if f["transits"]:
+                        all_transits.append(", ".join(f["transits"]))
+                
+                if all_transits:
+                    unique_transits = " or ".join(list(set(all_transits))[:2])
+                    carrier_block.append(f"\t•\t🔁 Transit: {unique_transits}")
+                else:
+                    carrier_block.append(f"\t•\t🔁 Direct Flight")
+                
+                offers.append("\n".join(carrier_block))
             
             if not offers:
                 return f"🌍 No available flights found for **{origin}** to **{destination}** on **{display_date}**. Please check alternative dates."
