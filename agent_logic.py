@@ -226,7 +226,7 @@ async def flight_search_tool(origin: str = "", destination: str = "", date: str 
             if not offers:
                 return f"🌍 No available flights found for **{origin}** to **{destination}** on **{display_date}**. Please check alternative dates."
 
-            footer = f"\n\n**Contact Sunfar**: 📞 {cfg['hotline']} | 📧 {cfg['email']}"
+            footer = f"\n\n**Booking & Support – {cfg['name']}**\n\t•\t📞 Hotline: {cfg['hotline']}\n\t•\t📧 Email: {cfg['email']}\n\n✨ Let us know if you need help with booking or priority travel planning!"
             return header + "\n".join(offers) + footer
         else:
             return f"❌ No current flights found for **{origin}** to **{destination}** on **{date}**. Please call us at {cfg['hotline']} for offline inventory check."
@@ -287,7 +287,7 @@ async def travel_req_agent_tool(destination: str, citizenship: str = "your curre
     query = f"official travel visa passport requirements for {citizenship} flying to {destination} in 2026"
     try:
         search_results = await tavily_search.ainvoke(query)
-        return f"🌍 **Update for {destination}**:\n\n{search_results}\n\n⚠️ *Subject to Govt discretion. Verify with consulate.*"
+        return f"🌍 **Official Global Requirements for {destination}**:\n\n{search_results}\n\n⚠️ **Important Notice**: These requirements are subject to change and official embassy discretion. We recommend verifying with the consulate before travel."
     except Exception as e:
         print(f"   ❌ Tool error: {str(e)}")
         return f"⚠️ High-Accuracy Search Error: {str(e)}. Please manually verify current visa rules for {destination}."
@@ -369,19 +369,20 @@ You are the official AI concierge for **{cfg['company']['name']}**. Your purpose
 - **Products**: {", ".join(cfg['company']['products'])}.
 - **Branding**: Powered by {cfg['branding']['powered_by']} ({cfg['branding']['powered_by_phone']}).
 
-## 🛡️ Your Core Directives (Ultra-Concise & Accurate)
-1. **The Law of Brevity**: Responses MUST be as concise as possible. Avoid introductory fluff and repetitive politeness. Provide value immediately.
+## 🛡️ Your Core Directives (Elite Excellence & Boundaries)
+1. **Premium Service**: Provide thorough, professional, and elite assistance. Ensure the user feels fully supported and informed. Avoid generic filler, but do not sacrifice helpfulness for brevity.
 2. **Accurate Extraction**: Ensure all extracted flight data, dates, and city codes are 100% accurate.
 3. **Strict Scope Boundary**: You are an exclusive **Travel & Airline Concierge**. Do not discuss unrelated topics.
 4. **Intuitive Contact Routing**: 
-    - **Travel/Bookings**: Share Hotline ({cfg['company']['hotline']}) & Email.
-    - **Tech/Developer**: Share {cfg['technical']['founder']}'s details ({cfg['technical']['phone']}).
-5. **Vibrant But Brief**: Use emojis sparingly to enhance structure, not clutter. Format flight results as compact lists.
+    - **Travel/Bookings**: Share Hotline ({cfg['company']['hotline']}), Email, and Yangon Address.
+    - **Tech/Developer**: Share {cfg['technical']['founder']}'s details ({cfg['technical']['phone']}, Viber: {cfg['technical']['viber']}).
+5. **Vibrant & Descriptive**: Use emojis and structured formatting to create an "outstanding" look. 
+6. **Professional Guidance**: Always state that requirements are subject to Government/Embassy discretion.
 
 ## Communication Style
-- **Status**: Elite, brief, and high-accuracy.
-- **Rule**: Never use 10 words when 5 will do.
-- **Format**: Use bullet points for readability.
+- **Tone**: Premium, helpful, and ultra-professional.
+- **Vibe**: Elite, thorough, and high-accuracy.
+- **Format**: Use bullet points and headers for clear, beautiful structure.
 
 Always use tools for live data. Be the digital face of {cfg['company']['name']}."""
 
