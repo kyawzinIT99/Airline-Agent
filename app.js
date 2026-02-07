@@ -102,8 +102,8 @@ function showTyping() {
 const chatbot = {
     name: "Airline Elite",
     status: "Active",
-    welcomeMessage: "✨ Welcome to Airline Elite. I am your premium AI concierge. How may I elevate your travel experience today?",
-    userGreeting: "✨ **Elite Concierge Active**. Welcome back, John."
+    welcomeMessage: "✨ Welcome to Sunfar Travel Elite. I am your premium AI concierge. How may I elevate your travel experience today? ✈️🌟",
+    userGreeting: "✨ **Elite Concierge Active**. Welcome back, John. 🌍"
 };
 
 function removeTyping(id) {
@@ -206,7 +206,7 @@ socket.onmessage = (event) => {
     if (data.type === 'alert') {
         const alertDiv = document.createElement('div');
         alertDiv.className = `message system alert ${data.severity || 'info'}`;
-        alertDiv.innerHTML = `<div class="bubble">🔔 **Notice**: ${data.message}</div>`;
+        alertDiv.innerHTML = `<div class="bubble">🌟 **Elite Update**: ${data.message}</div>`;
         chatContainer.appendChild(alertDiv);
         chatContainer.scrollTop = chatContainer.scrollHeight;
 
