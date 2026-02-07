@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✈️ Airline Elite - AI Concierge</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar on the Left -->
+        <aside class="side-panel">
+            <header class="sidebar-header">
+                <div class="logo">
+                    <img src="sunfar_logo.png" alt="Sunfar Travels & Tours" class="sidebar-logo">
+                </div>
+            </header>
+
+            <div class="side-content">
+                <section class="info-card">
+                    <h3>📞 HOT LINE</h3>
+                    <p id="cfg-hotline">01-8243993</p>
+                </section>
+
+                <section class="info-card">
+                    <h3>📧 EMAIL</h3>
+                    <p id="cfg-email">info@sunfar38.com</p>
+                </section>
+
+                <section class="info-card">
+                    <h3>📍 ADDRESS</h3>
+                    <p id="cfg-address">No. 29/31, 38th Street, Kyauktada Township, Yangon, Myanmar.</p>
+                </section>
+
+                <section class="info-card">
+                    <h3>📦 PRODUCTS</h3>
+                    <ul id="cfg-products" class="product-list">
+                        <li>Airport VIP Assistance</li>
+                        <li>Tour</li>
+                        <li>Attraction Ticket</li>
+                        <li>Flight</li>
+                        <li>Hotel</li>
+                    </ul>
+                </section>
+
+                <section class="info-card">
+                    <h3>🕒 HOURS</h3>
+                    <div id="cfg-hours" class="hours-info">
+                        <p>MON - FRI: 09:00 - 17:00</p>
+                        <p>WEEKENDS: 09:00 - 13:00</p>
+                    </div>
+                </section>
+
+                <section class="info-card">
+                    <h3>💳 PAYMENT</h3>
+                    <p id="cfg-payment">Visa, Local Payment</p>
+                </section>
+            </div>
+
+            <footer class="sidebar-footer">
+                <div class="status-badge">
+                    AI Concierge Active
+                </div>
+                <div class="powered-by">
+                    <p>Powered by <a href="tel:0949567820">itsolutions.mm</a></p>
+                    <span>(0949567820)</span>
+                </div>
+            </footer>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-interface">
+            <header class="mobile-header">
+                <button id="menu-toggle" class="menu-btn">☰</button>
+                <h1>AIRLINE ELITE</h1>
+            </header>
+
+            <div id="chat-container" class="chat-container">
+                <!-- Initial Welcome Message -->
+                <div class="message system">
+                    <div class="message-wrapper">
+                        <div class="avatar">✨</div>
+                        <div class="bubble">
+                            Welcome to Sunfar Travel. I am your premium AI concierge. How may I elevate your travel
+                            experience today?
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="glass-input-wrapper">
+                    <input type="text" id="user-input"
+                        placeholder="Search flights, check baggage, or ask for assistance..." autocomplete="off">
+                    <div class="input-actions">
+                        <button id="voice-btn" class="action-btn" title="Voice Input">🎤</button>
+                        <button id="upload-btn" class="action-btn" title="Upload Document">📎</button>
+                        <button id="send-btn" class="send-btn">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M7 11L12 6L17 11M12 18V7" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js?v=elite_v3"></script>
+</body>
+
+</html>

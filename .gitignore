@@ -1,0 +1,17 @@
+venv/
+__pycache__/
+*.pyc
+.env
+user_profiles.json
+*.log
+.DS_Store
+.gemini/
+.brain/
+final_audit.py
+verify_dynamic.py
+test_routing.py
+api_audit.py
+verify_guardrail.py
+test_agent.py
+Enhanced_Airline_Agent_v2.json
+✈️ Airline Information Assistant - Production.json

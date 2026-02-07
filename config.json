@@ -1,0 +1,30 @@
+{
+  "company": {
+    "name": "Sunfar Travel",
+    "hotline": "01-8243993",
+    "email": "info@sunfar38.com",
+    "address": "No. 29/31, 38th Street, Kyauktada Township, Yangon, Myanmar.",
+    "hours": {
+      "weekday": "09:00 - 17:00",
+      "weekend": "09:00 - 13:00"
+    },
+    "products": [
+      "Airport VIP Assistance",
+      "Tour",
+      "Attraction Ticket",
+      "Flight",
+      "Hotel"
+    ]
+  },
+  "technical": {
+    "founder": "MR. KYAW ZIN TUN",
+    "phone": "0949567820",
+    "viber": "095043252",
+    "line": "0949567820",
+    "whatsapp": "0949567820"
+  },
+  "branding": {
+    "powered_by": "itsolutions.mm",
+    "powered_by_phone": "0949567820"
+  }
+}
