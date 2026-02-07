@@ -69,12 +69,7 @@ class ChatRequest(BaseModel):
 async def notifications_websocket(websocket: WebSocket):
     await manager.connect(websocket)
     try:
-        # Send initial welcome alert
-        await websocket.send_json({
-            "type": "alert",
-            "message": "Welcome back! Gate for your Munich flight is now B12.",
-            "severity": "info"
-        })
+        # Notification stream active
         while True:
             await asyncio.sleep(60) # Keep alive
             await websocket.receive_text()
