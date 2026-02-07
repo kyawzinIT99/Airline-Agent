@@ -177,7 +177,7 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: #ffffff;
+    background: var(--primary);
     position: relative;
     overflow: hidden;
     max-width: 100%;
