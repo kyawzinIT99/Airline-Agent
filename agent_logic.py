@@ -51,6 +51,7 @@ class AmadeusClient:
             "destinationLocationCode": destination,
             "departureDate": date,
             "adults": 1,
+            "currencyCode": "USD",
             "max": 5
         }
         headers = {"Authorization": f"Bearer {self.token}"}
@@ -133,7 +134,8 @@ async def flight_search_tool(origin: str, destination: str, date: str, origin_na
             
             header = f"✈️ {header_origin} → {header_dest}\n📅 {display_date}\n\nAvailable Flights:\n"
             offers = []
-            currency_map = {"EUR": "€", "USD": "$", "THB": "฿"}
+            # Currency mapping with USD as the primary focus
+            currency_map = {"USD": "$", "EUR": "€", "THB": "฿"}
 
             # Carry dictionaries for carrier names
             carriers_map = results.get("dictionaries", {}).get("carriers", {})
