@@ -44,11 +44,15 @@ async function appendMessage(role, content) {
     msgDiv.className = `message ${role}`;
     if (role === 'system') msgDiv.classList.add('typing');
 
-    const avatar = role === 'user' ? '👤' : '✨';
+    const prefix = role === 'user' ? '[USER]> ' : '[ELITE_AI]> ';
+    const avatar = role === 'user' ? '👤' : '⚡';
     msgDiv.innerHTML = `
         <div class="message-wrapper">
             <div class="avatar">${avatar}</div>
-            <div class="bubble"></div>
+            <div class="content" style="flex: 1; display: flex; flex-direction: column;">
+                <div class="bubble-prefix" style="color: var(--accent); font-weight: bold; margin-bottom: 4px; font-size: 0.8rem; letter-spacing: 1px;">${prefix}</div>
+                <div class="bubble"></div>
+            </div>
         </div>
     `;
 
