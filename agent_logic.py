@@ -122,7 +122,7 @@ async def flight_search_tool(origin: str = "", destination: str = "", date: str 
 
         # Use semaphore to handle simultaneous users gracefully
         async with amadeus_semaphore:
-            results = await asyncio.wait_for(amadeus.search_flights(origin, destination, date), timeout=10.0)
+            results = await asyncio.wait_for(amadeus.search_flights(origin, destination, date), timeout=20.0)
         
         if "data" in results and results["data"]:
             # Format Date for Display
@@ -145,20 +145,28 @@ async def flight_search_tool(origin: str = "", destination: str = "", date: str 
             carriers_map = results.get("dictionaries", {}).get("carriers", {})
 
             for offer in results["data"][:5]: # Take top 5
-                price = offer["price"]["total"]
-                currency_code = offer["price"]["currency"]
-                currency_symbol = currency_map.get(currency_code, currency_code)
-                itinerary = offer["itineraries"][0]
-                readable_duration = format_duration(itinerary["duration"])
-                
-                # Extract Carrier Code (Try multiple sources)
-                carrier_code = offer.get("validatingCarrierCodes", [None])[0]
-                if not carrier_code and itinerary.get("segments"):
-                    carrier_code = itinerary["segments"][0].get("carrierCode")
-                
-                carrier_name = carriers_map.get(carrier_code, carrier_code) or "Airline"
-                
-                offers.append(f"\t•\t{carrier_name} — {currency_symbol}{price} — ⏱️ {readable_duration}")
+                try:
+                    price = offer.get("price", {}).get("total", "N/A")
+                    currency_code = offer.get("price", {}).get("currency", "USD")
+                    currency_symbol = currency_map.get(currency_code, currency_code)
+                    
+                    itineraries = offer.get("itineraries", [])
+                    if not itineraries: continue
+                    
+                    itinerary = itineraries[0]
+                    duration = itinerary.get("duration", "PT0H0M")
+                    readable_duration = format_duration(duration)
+                    
+                    # Extract Carrier Code (Try multiple sources)
+                    carrier_code = offer.get("validatingCarrierCodes", [None])[0]
+                    if not carrier_code and itinerary.get("segments"):
+                        carrier_code = itinerary["segments"][0].get("carrierCode")
+                    
+                    carrier_name = carriers_map.get(carrier_code, carrier_code) or "Airline"
+                    offers.append(f"\t•\t{carrier_name} — {currency_symbol}{price} — ⏱️ {readable_duration}")
+                except Exception as loop_e:
+                    print(f"⚠️ Error parsing flight offer: {loop_e}")
+                    continue
             
             footer = f"\n\nBooking & Support – {cfg['name']}\n\t•\t📞 Hotline: {cfg['hotline']}\n\t•\t📧 Email: {cfg['email']}\n\n✨ Let us know if you need help with booking or travel planning!"
             return header + "\n".join(offers) + footer
