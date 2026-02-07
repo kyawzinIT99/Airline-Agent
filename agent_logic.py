@@ -135,13 +135,24 @@ async def flight_search_tool(origin: str, destination: str, date: str, origin_na
             offers = []
             currency_map = {"EUR": "€", "USD": "$", "THB": "฿"}
 
+            # Carry dictionaries for carrier names
+            carriers_map = results.get("dictionaries", {}).get("carriers", {})
+
             for offer in results["data"][:5]: # Take top 5
                 price = offer["price"]["total"]
                 currency_code = offer["price"]["currency"]
                 currency_symbol = currency_map.get(currency_code, currency_code)
                 itinerary = offer["itineraries"][0]
                 readable_duration = format_duration(itinerary["duration"])
-                offers.append(f"\t•\t{currency_symbol}{price} — ⏱️ {readable_duration}")
+                
+                # Extract Carrier Code (Try multiple sources)
+                carrier_code = offer.get("validatingCarrierCodes", [None])[0]
+                if not carrier_code and itinerary.get("segments"):
+                    carrier_code = itinerary["segments"][0].get("carrierCode")
+                
+                carrier_name = carriers_map.get(carrier_code, carrier_code) or "Airline"
+                
+                offers.append(f"\t•\t{carrier_name} — {currency_symbol}{price} — ⏱️ {readable_duration}")
             
             footer = f"\n\nBooking & Support – {cfg['name']}\n\t•\t📞 Hotline: {cfg['hotline']}\n\t•\t📧 Email: {cfg['email']}\n\n✨ Let us know if you need help with booking or travel planning!"
             return header + "\n".join(offers) + footer
